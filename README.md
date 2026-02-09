@@ -1,119 +1,177 @@
-# **Cache Simulator**
+# ADLD Cache Simulator
 
-## **Table of Contents**
+A comparative cache architecture simulator designed for computer architecture education. This tool provides explicit implementations of Direct-Mapped, Fully Associative, and Set-Associative caches with pedagogical visualizations.
 
-- [Overview](#overview)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Launch the Application](#1-launch-the-application)
-  - [Configure Cache Parameters](#2-configure-cache-parameters)
-  - [Run Simulation](#3-run-simulation)
-  - [Update Statistics](#4-update-statistics)
-- [Implementation Details](#implementation-details)
-- [Screenshots](#screenshots)
+## Features
 
-## **Overview**
+- **Multiple Cache Architectures**
+  - Direct-Mapped: Each block maps to exactly one cache line
+  - Fully Associative: Any block can map to any cache line
+  - Set-Associative: N-way associative within sets
 
-The Cache Simulator project provides a graphical user interface (GUI) application for simulating memory accesses and analyzing cache system performance. The simulator allows users to configure cache parameters and visualize the behavior of different cache configurations.
+- **Configurable Parameters**
+  - Cache size, block size, and associativity
+  - Word size (1, 2, 4, 8 bytes)
+  - Address width (16, 32, 64 bits)
+  - Replacement policies (LRU, FIFO, Random)
 
-## **Features**
+- **Pedagogical Visualizations**
+  - Address decomposition with color-coded bit fields (Tag, Index, Offset)
+  - Real-time cache state display
+  - Step-by-step simulation mode
+  - Side-by-side architecture comparison
 
-- **Graphical User Interface (GUI)** for easy interaction.
-- Configurable cache parameters: cache size, block size, and associativity.
-- Simulation of memory accesses with hit/miss tracking.
-- Display of simulation statistics, including hit rate.
+- **Performance Metrics**
+  - Hit/miss tracking and rates
+  - AMAT (Average Memory Access Time) calculation
+  - Comparative analysis across architectures
 
-## **Project Structure**
+## Installation
 
-The project is organized into the following main files:
+### Requirements
 
-1. **`cache_simulator.py`**: Contains the `CacheSimulator` class, which represents the cache memory system and its operations.
-2. **`gui.py`**: Contains the `CacheSimulatorGUI` class, responsible for creating the graphical user interface using Tkinter.
-3. **`main.py`**: The main script that initializes the Tkinter application and runs the GUI.
+- **Python 3.10+** (tested with Python 3.14)
+- Tkinter (usually included with Python)
 
-## **Installation**
+### Steps
 
-1. Clone the repository to your local machine:
-
+1. Clone the repository:
    ```bash
    git clone https://github.com/aksh1009/cache-simulator.git
-   ```
-
-2. Navigate to the project directory:
-
-   ```bash
    cd cache-simulator
    ```
 
-3. Run the main script:
+2. Ensure Python 3.x is installed with Tkinter:
+   ```bash
+   # Windows/Mac - usually included with Python
+   pip install tk
 
+   # Linux
+   sudo apt-get install python3-tk
+   ```
+
+3. Run the application:
    ```bash
    python main.py
    ```
 
-   *Note: Make sure you have Python installed on your system.*
+## Usage
 
-   *Tkinter is usually included with standard Python installations, so you typically don't need to install it separately using `pip`. However, if you encounter issues or if you're using a virtual environment, you can try the following command:*
+### Basic Simulation
 
-   ```bash
-   pip install tk
-   ```
+1. Select cache architecture (Direct-Mapped, Fully Associative, or Set-Associative)
+2. Configure cache parameters (size, block size, associativity)
+3. Enter memory trace in the text area or load from file
+4. Click "Run Full Simulation" or use "Step" for step-by-step execution
 
-   *Keep in mind that the actual package name might vary depending on your operating system. If you're on Linux, you might need to use:*
+### Memory Trace Format
 
-   ```bash
-   sudo apt-get install python3-tk
-   ```
-
-   *On macOS, you can use Homebrew:*
-
-   ```bash
-   brew install python-tk
-   ```
-
-
-
-## **Usage**
-
-### 1. Launch the Application
-
-- Follow the installation instructions.
-- Execute the main script to launch the GUI.
-
-### 2. Configure Cache Parameters
-
-- Enter the desired cache parameters (cache size, block size, associativity) in the GUI.
-
-### 3. Run Simulation
-
-- Click the "Run Simulation" button to simulate memory accesses and view the results.
-
-### 4. Update Statistics
-
-- Click the "Update Statistics" button to display simulation statistics.
-
-## **Implementation Details**
-
-The core functionality is encapsulated in the `CacheSimulator` class, providing methods for cache initialization, LRU-based updates, and visual representation. The `CacheSimulatorGUI` class utilizes Tkinter for the GUI implementation.
-
-```python
-# Example code snippet:
-from cache_simulator import CacheSimulator, CacheSimulatorGUI
-
-# Instantiate the CacheSimulator class and run simulations
-cache_simulator = CacheSimulator(cache_size=1024, block_size=64, associativity=2)
-cache_simulator.simulate_memory_accesses(memory_accesses=[(0x0A, "R"), (0x0B, "R")], text_widget=log_text)
-
-# Create and run the GUI
-root = tk.Tk()
-gui = CacheSimulatorGUI(root)
-root.mainloop()
+Traces are text files with one access per line:
+```
+# Comments start with #
+0x0A R       # Hexadecimal address, Read operation
+16 W         # Decimal address, Write operation
+0xFF         # Address only (defaults to Read)
 ```
 
-This code snippet demonstrates how to use the `CacheSimulator` and `CacheSimulatorGUI` classes in your Python script.
+Sample traces are provided in the `sample_traces/` directory.
 
-## **Screenshots**
-<img width="627" alt="image" src="https://github.com/aksh1009/cache-simulator/assets/143216212/61dbac23-4240-4b3b-97d4-9c08b5661fb7"> <img width="624" alt="image" src="https://github.com/aksh1009/cache-simulator/assets/143216212/935b9181-083e-4ea7-93fe-807f06c8a090">
+### Architecture Comparison
 
+Click "Compare Architectures" to run the same trace on all three cache types simultaneously and view side-by-side hit rates and AMAT values.
+
+## Project Structure
+
+```
+CacheSim/
+├── main.py                     # Application entry point
+├── gui.py                      # Tkinter GUI implementation
+├── cache_architectures.py      # Cache implementations (BaseCache, DM, FA, SA)
+├── cache_simulator_legacy.py   # Original implementation (deprecated)
+├── ASSUMPTIONS.md              # Design decisions and limitations
+├── PEDAGOGY.md                 # Educational feature mapping
+├── CLAUDE.md                   # Development guidance
+├── README.md                   # This file
+└── sample_traces/              # Example memory traces
+    ├── simple.txt
+    ├── conflict_demo.txt
+    └── sequential.txt
+```
+
+## Architecture Overview
+
+### Class Hierarchy
+
+```
+BaseCache (ABC)
+├── DirectMappedCache    (assoc=1, no replacement choice)
+├── FullyAssociativeCache (no index bits, full search)
+└── SetAssociativeCache   (N-way, index selects set)
+```
+
+### Address Decomposition
+
+For a 32-bit address with 256-byte cache, 16-byte blocks, 4-way associativity:
+
+```
+Address: 0x000003A7 (935)
+Binary:  00000000000000000000001110100111
+         |----------- TAG ----------|IDX|OFF|
+Tag:     0000000000000000000000111010  = 58
+Index:   01                            = 1
+Offset:  0111                          = 7
+```
+
+- **Offset bits** = log2(block_size) = 4 bits
+- **Index bits** = log2(num_sets) = 2 bits (for 4 sets)
+- **Tag bits** = address_width - offset_bits - index_bits = 26 bits
+
+## Educational Concepts
+
+| Concept | Simulator Feature |
+|---------|-------------------|
+| Address decomposition | Color-coded bit visualization |
+| Hit/miss analysis | Per-access logging with results |
+| Conflict misses | Compare DM vs FA architectures |
+| Replacement policies | LRU, FIFO, Random selection |
+| AMAT calculation | Configurable hit time and miss penalty |
+| Trade-off analysis | Side-by-side comparison mode |
+
+## AMAT Calculation
+
+```
+AMAT = Hit Time + (Miss Rate × Miss Penalty)
+```
+
+Default values: Hit Time = 1 cycle, Miss Penalty = 100 cycles
+
+Example: With 80% hit rate (20% miss rate):
+```
+AMAT = 1 + (0.20 × 100) = 21 cycles
+```
+
+## Academic Simplifications
+
+This simulator is designed for educational purposes and makes the following simplifications compared to real hardware:
+
+| Real-World Feature | Simulator Approach |
+|-------------------|-------------------|
+| Multi-level caches (L1/L2/L3) | Single-level cache only |
+| Separate I-cache and D-cache | Unified cache |
+| Write policies (write-through/write-back) | Not modeled (no writes to memory) |
+| Cache coherence protocols | Not applicable (single cache) |
+| Prefetching | Not implemented |
+| Non-blocking caches | Blocking access model |
+| Variable latencies | Fixed hit time and miss penalty |
+
+These simplifications allow focus on the core concepts of address decomposition, hit/miss analysis, and replacement policies as taught in ADLD coursework.
+
+For detailed design decisions, see [ASSUMPTIONS.md](ASSUMPTIONS.md). For lecture-to-feature mapping, see [PEDAGOGY.md](PEDAGOGY.md).
+
+## License
+
+MIT License
+
+## Contributing
+
+Contributions welcome! Please see CLAUDE.md for development guidelines.

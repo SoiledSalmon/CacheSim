@@ -1,0 +1,37 @@
+# Sequential access pattern
+# Demonstrates spatial locality benefits
+# Good hit rate when block size is larger
+
+# Sequential byte accesses within first block
+0x00 R
+0x01 R
+0x02 R
+0x03 R
+
+# Sequential byte accesses within second block
+0x10 R
+0x11 R
+0x12 R
+0x13 R
+
+# Go back to first block - should hit
+0x04 R
+0x05 R
+0x06 R
+0x07 R
+
+# Sequential word accesses
+0x20 R
+0x24 R
+0x28 R
+0x2C R
+
+# Strided access pattern (every 16 bytes)
+0x40 R
+0x50 R
+0x60 R
+0x70 R
+0x80 R
+0x90 R
+0xA0 R
+0xB0 R

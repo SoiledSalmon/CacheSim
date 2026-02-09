@@ -1,0 +1,32 @@
+# Conflict miss demonstration trace
+# This trace shows how direct-mapped caches suffer from conflict misses
+# while fully associative caches avoid them
+
+# For a cache with:
+# - 256 bytes total, 16 bytes per block = 16 blocks
+# - Direct-mapped: addresses 0x000 and 0x100 map to same index
+
+# Initial accesses
+0x000 R
+0x010 R
+0x020 R
+0x030 R
+
+# These addresses conflict with the above in direct-mapped
+# (assuming 16-block cache with 16-byte blocks)
+0x100 R
+0x110 R
+0x120 R
+0x130 R
+
+# Re-access original addresses - will miss in DM, may hit in FA/SA
+0x000 R
+0x010 R
+0x020 R
+0x030 R
+
+# Re-access conflicting addresses - will miss in DM, may hit in FA/SA
+0x100 R
+0x110 R
+0x120 R
+0x130 R
