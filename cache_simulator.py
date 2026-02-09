@@ -1,3 +1,5 @@
+import tkinter as tk
+
 class CacheSimulator:
     def __init__(self, cache_size, block_size, associativity):
         self.cache_size = cache_size
