@@ -1,31 +1,34 @@
 # Conflict miss demonstration trace
+# Config: 256B cache, 16B blocks = 16 blocks
+# Expected results (with default config):
+#   Direct-Mapped:     0% hit rate  (16 misses)
+#   Fully Associative: 50% hit rate (8 hits, 8 misses)
+#   4-way Set-Assoc:   50% hit rate (8 hits, 8 misses)
+#
 # This trace shows how direct-mapped caches suffer from conflict misses
-# while fully associative caches avoid them
+# while fully associative and set-associative caches avoid them.
+# Addresses 0x000 and 0x100 map to the same DM index (index 0).
 
-# For a cache with:
-# - 256 bytes total, 16 bytes per block = 16 blocks
-# - Direct-mapped: addresses 0x000 and 0x100 map to same index
-
-# Initial accesses
+# Initial accesses (cold misses)
 0x000 R
 0x010 R
 0x020 R
 0x030 R
 
 # These addresses conflict with the above in direct-mapped
-# (assuming 16-block cache with 16-byte blocks)
+# (same index bits, different tag bits)
 0x100 R
 0x110 R
 0x120 R
 0x130 R
 
-# Re-access original addresses - will miss in DM, may hit in FA/SA
+# Re-access original addresses — MISS in DM, HIT in FA/SA
 0x000 R
 0x010 R
 0x020 R
 0x030 R
 
-# Re-access conflicting addresses - will miss in DM, may hit in FA/SA
+# Re-access conflicting addresses — MISS in DM, HIT in FA/SA
 0x100 R
 0x110 R
 0x120 R

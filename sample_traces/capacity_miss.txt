@@ -1,0 +1,32 @@
+# Capacity miss demonstration
+# Config: 256B cache, 16B blocks = 16 cache blocks
+# This trace accesses 17 unique blocks, exceeding cache capacity
+# Expected: All architectures suffer capacity misses on re-access
+# DM hit rate ~ 0%, FA/SA hit rate depends on replacement policy
+
+# Fill all 16 cache blocks
+0x0000 R
+0x0010 R
+0x0020 R
+0x0030 R
+0x0040 R
+0x0050 R
+0x0060 R
+0x0070 R
+0x0080 R
+0x0090 R
+0x00A0 R
+0x00B0 R
+0x00C0 R
+0x00D0 R
+0x00E0 R
+0x00F0 R
+
+# Access one more block — forces eviction in ALL architectures
+0x0100 R
+
+# Re-access evicted blocks — guaranteed miss in FA (LRU evicts 0x0000)
+0x0000 R
+0x0010 R
+0x0020 R
+0x0030 R

@@ -115,12 +115,15 @@ class CacheSimulatorGUI:
         self.trace_text = scrolledtext.ScrolledText(trace_frame, width=35, height=12, font=("Consolas", 9))
         self.trace_text.pack(fill=tk.BOTH, expand=True, pady=5)
 
-        # Load default sample
-        self.trace_text.insert(tk.END, "# Simple trace example\n")
-        self.trace_text.insert(tk.END, "# Format: address [R/W]\n")
-        self.trace_text.insert(tk.END, "0x00 R\n0x04 R\n0x08 R\n0x0C R\n")
-        self.trace_text.insert(tk.END, "0x10 R\n0x14 R\n0x18 R\n0x1C R\n")
-        self.trace_text.insert(tk.END, "0x00 R\n0x04 R\n")
+        # Load default sample — conflict trace that shows architecture differences
+        self.trace_text.insert(tk.END, "# Conflict miss demo (default config: 256B cache, 16B blocks)\n")
+        self.trace_text.insert(tk.END, "# Expected: DM=0% hit, FA=50% hit, SA(4-way)=50% hit\n")
+        self.trace_text.insert(tk.END, "0x000 R\n0x010 R\n0x020 R\n0x030 R\n")
+        self.trace_text.insert(tk.END, "# Conflicting addresses (same DM index, different tag)\n")
+        self.trace_text.insert(tk.END, "0x100 R\n0x110 R\n0x120 R\n0x130 R\n")
+        self.trace_text.insert(tk.END, "# Re-access originals — MISS in DM, HIT in FA/SA\n")
+        self.trace_text.insert(tk.END, "0x000 R\n0x010 R\n0x020 R\n0x030 R\n")
+        self.trace_text.insert(tk.END, "0x100 R\n0x110 R\n0x120 R\n0x130 R\n")
 
         # Load trace button
         btn_frame = ttk.Frame(trace_frame)
@@ -323,6 +326,46 @@ class CacheSimulatorGUI:
             accesses.append((address, operation))
 
         return accesses
+
+    def _check_trace_differentiates(self, trace, cache_size, block_size):
+        """Check if trace will show differences between cache architectures.
+
+        Returns a warning message if the trace is unlikely to differentiate,
+        or None if differences are expected.
+        """
+        num_blocks = cache_size // block_size
+
+        # Find unique block addresses and check for DM index collisions
+        block_addresses = set()
+        dm_index_map = {}  # index -> set of tags
+        for addr, _ in trace:
+            block_addr = addr // block_size
+            block_addresses.add(block_addr)
+            dm_index = block_addr % num_blocks
+            tag = block_addr // num_blocks
+            if dm_index not in dm_index_map:
+                dm_index_map[dm_index] = set()
+            dm_index_map[dm_index].add(tag)
+
+        unique_blocks = len(block_addresses)
+        has_conflicts = any(len(tags) > 1 for tags in dm_index_map.values())
+
+        warnings = []
+        if unique_blocks <= num_blocks and not has_conflicts:
+            warnings.append(
+                f"This trace uses {unique_blocks} unique blocks, but the cache "
+                f"holds {num_blocks} blocks with no index conflicts.\n"
+                f"All three architectures will produce identical results."
+            )
+        if not has_conflicts and unique_blocks > num_blocks:
+            warnings.append(
+                f"No DM index conflicts detected — only capacity misses will "
+                f"occur. DM and SA may still show similar behavior."
+            )
+
+        if warnings:
+            return "\n\n".join(warnings)
+        return None
 
     def _create_cache(self):
         """Create cache instance based on current configuration."""
@@ -620,30 +663,54 @@ class CacheSimulatorGUI:
             messagebox.showerror("Error", f"Invalid configuration: {e}")
             return
 
+        # Check if trace will show meaningful differences
+        trace_warning = self._check_trace_differentiates(
+            self.parsed_trace, cache_size, block_size
+        )
+        if trace_warning:
+            proceed = messagebox.askyesno(
+                "Trace Warning",
+                trace_warning + "\n\nProceed anyway?"
+            )
+            if not proceed:
+                return
+
         # Create comparison window
         compare_win = tk.Toplevel(self.master)
         compare_win.title("Architecture Comparison")
-        compare_win.geometry("900x500")
+        compare_win.geometry("950x700")
 
-        # Create caches - use user's configured associativity for set-associative comparison
-        user_assoc = int(self.assoc_var.get())
+        # Auto-compute associativity for SA comparison — never use 1-way (that's just DM)
+        num_blocks = cache_size // block_size
+        sa_assoc = min(4, num_blocks) if num_blocks >= 2 else num_blocks
+        if sa_assoc < 2:
+            sa_assoc = 2  # Minimum 2-way to differentiate from DM
+
         architectures = [
             ("Direct-Mapped", create_cache("Direct-Mapped", cache_size, block_size,
                                            word_size=word_size, address_width=address_width)),
             ("Fully Associative", create_cache("Fully Associative", cache_size, block_size,
                                                word_size=word_size, address_width=address_width,
                                                replacement_policy="LRU")),
-            (f"{user_assoc}-way Set-Associative", create_cache("Set-Associative", cache_size, block_size,
-                                                    associativity=user_assoc, word_size=word_size,
+            (f"{sa_assoc}-way Set-Associative", create_cache("Set-Associative", cache_size, block_size,
+                                                    associativity=sa_assoc, word_size=word_size,
                                                     address_width=address_width,
                                                     replacement_policy="LRU"))
         ]
 
-        # Run trace on each
+        # Run trace on each, capturing per-access results
         results = []
+        per_access = []  # list of (addr, op, [hit_dm, hit_fa, hit_sa])
+        for i, (address, operation) in enumerate(self.parsed_trace):
+            access_row = [address, operation]
+            hits_row = []
+            for name, cache in architectures:
+                result = cache.access(address, operation)
+                hits_row.append(result['hit'])
+            access_row.append(hits_row)
+            per_access.append(access_row)
+
         for name, cache in architectures:
-            for address, operation in self.parsed_trace:
-                cache.access(address, operation)
             stats = cache.get_statistics()
             amat = cache.calculate_amat(hit_time, miss_penalty)
             results.append((name, stats, amat))
@@ -688,6 +755,47 @@ class CacheSimulatorGUI:
             ))
 
         tree.pack(padx=20, pady=10, fill=tk.X)
+
+        # Per-access hit/miss breakdown table
+        breakdown_frame = ttk.LabelFrame(compare_win, text="Per-Access Breakdown", padding="5")
+        breakdown_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 5))
+
+        arch_names = [name for name, _ in architectures]
+        breakdown_cols = ("num", "address", "op", "dm", "fa", "sa")
+        breakdown_tree = ttk.Treeview(breakdown_frame, columns=breakdown_cols,
+                                      show="headings", height=min(len(per_access), 12))
+
+        breakdown_tree.heading("num", text="#")
+        breakdown_tree.heading("address", text="Address")
+        breakdown_tree.heading("op", text="Op")
+        breakdown_tree.heading("dm", text=arch_names[0])
+        breakdown_tree.heading("fa", text=arch_names[1])
+        breakdown_tree.heading("sa", text=arch_names[2])
+
+        breakdown_tree.column("num", width=40, anchor=tk.CENTER)
+        breakdown_tree.column("address", width=100, anchor=tk.CENTER)
+        breakdown_tree.column("op", width=40, anchor=tk.CENTER)
+        breakdown_tree.column("dm", width=120, anchor=tk.CENTER)
+        breakdown_tree.column("fa", width=140, anchor=tk.CENTER)
+        breakdown_tree.column("sa", width=180, anchor=tk.CENTER)
+
+        breakdown_tree.tag_configure("diff", background="#fff3cd")
+
+        for i, (addr, op, hits) in enumerate(per_access):
+            dm_str = "HIT" if hits[0] else "MISS"
+            fa_str = "HIT" if hits[1] else "MISS"
+            sa_str = "HIT" if hits[2] else "MISS"
+            # Highlight rows where architectures differ
+            tag = "diff" if not (hits[0] == hits[1] == hits[2]) else ""
+            breakdown_tree.insert("", tk.END, values=(
+                i + 1, f"0x{addr:04X}", op, dm_str, fa_str, sa_str
+            ), tags=(tag,) if tag else ())
+
+        breakdown_scroll = ttk.Scrollbar(breakdown_frame, orient=tk.VERTICAL,
+                                         command=breakdown_tree.yview)
+        breakdown_tree.configure(yscrollcommand=breakdown_scroll.set)
+        breakdown_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        breakdown_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Analysis text
         analysis_frame = ttk.LabelFrame(compare_win, text="Analysis", padding="10")

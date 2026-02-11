@@ -1,32 +1,36 @@
-# Sequential access pattern
-# Demonstrates spatial locality benefits
-# Good hit rate when block size is larger
+# Sequential access pattern — demonstrates spatial locality
+# Config: 256B cache, 16B blocks
+# Expected: All architectures produce identical results (no conflicts)
+#   Working set fits in cache; spatial locality gives high hit rate
+#
+# Good for demonstrating how block size affects hit rate:
+# try block_size=4 vs block_size=16 to see the difference.
 
-# Sequential byte accesses within first block
+# Sequential byte accesses within first block (0x00-0x0F)
 0x00 R
 0x01 R
 0x02 R
 0x03 R
 
-# Sequential byte accesses within second block
+# Sequential byte accesses within second block (0x10-0x1F)
 0x10 R
 0x11 R
 0x12 R
 0x13 R
 
-# Go back to first block - should hit
+# Go back to first block — should hit
 0x04 R
 0x05 R
 0x06 R
 0x07 R
 
-# Sequential word accesses
+# Sequential word accesses in third block (0x20-0x2F)
 0x20 R
 0x24 R
 0x28 R
 0x2C R
 
-# Strided access pattern (every 16 bytes)
+# Strided access pattern (every 16 bytes = one new block each)
 0x40 R
 0x50 R
 0x60 R

@@ -1,0 +1,16 @@
+# Spatial locality demonstration
+# Config: 256B cache, 16B blocks
+# Expected: All architectures produce identical results
+#   All accesses are within one block (0x0040-0x004F)
+#   First access = cold miss, rest = hits (87.5% hit rate)
+#
+# Shows that once a block is loaded, nearby addresses are "free"
+
+0x0040 R
+0x0044 R
+0x0048 R
+0x004C R
+0x0040 R
+0x0044 R
+0x0048 R
+0x004C R

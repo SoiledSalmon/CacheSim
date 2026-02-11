@@ -1,0 +1,17 @@
+# Associativity threshold demonstration
+# Config: 256B cache, 16B blocks = 16 blocks
+# Expected results (with default config):
+#   Direct-Mapped:     0% hit rate  (3 blocks thrash on index 0)
+#   2-way Set-Assoc:   0% hit rate  (3 blocks thrash in 2-way set)
+#   4-way Set-Assoc:   50% hit rate (3 blocks fit in 4-way set)
+#   Fully Associative: 50% hit rate (3 blocks fit easily)
+#
+# Shows the "threshold effect" of associativity:
+# 3 conflicting blocks need at least 3-way associativity to avoid thrashing.
+
+0x0000 R
+0x0100 R
+0x0200 R
+0x0000 R
+0x0100 R
+0x0200 R

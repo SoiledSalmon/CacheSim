@@ -1,4 +1,8 @@
 # Simple memory trace for basic testing
+# Config: Any (no conflicts with default 256B/16B config)
+# Expected: All architectures produce identical results
+#   All: ~72.7% hit rate (8 of 11 access same 2 blocks)
+#
 # Format: address operation (R=read, W=write)
 # Addresses can be hex (0x prefix) or decimal
 
