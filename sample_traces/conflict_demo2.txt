@@ -1,4 +1,4 @@
-# Conflict demo 2 — All addresses map to the SAME DM index
+# Conflict - All addresses map to the SAME DM index
 # Config: 256B cache, 16B blocks = 16 blocks
 # Expected results (with default config):
 #   Direct-Mapped:     0% hit rate  (every access evicts the previous)
