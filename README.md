@@ -166,8 +166,6 @@ This simulator is designed for educational purposes and makes the following simp
 
 These simplifications allow focus on the core concepts of address decomposition, hit/miss analysis, and replacement policies as taught in ADLD coursework.
 
-For detailed design decisions, see [ASSUMPTIONS.md](ASSUMPTIONS.md). For lecture-to-feature mapping, see [PEDAGOGY.md](PEDAGOGY.md).
-
 ## License
 
 MIT License
@@ -175,3 +173,4 @@ MIT License
 ## Contributing
 
 Contributions welcome! Please see CLAUDE.md for development guidelines.
+
